@@ -59,3 +59,5 @@ obj-$(CONFIG_UACCE)		+= uacce/
 obj-$(CONFIG_XILINX_SDFEC)	+= xilinx_sdfec.o
 obj-$(CONFIG_HISI_HIKEY_USB)	+= hisi_hikey_usb.o
 obj-$(CONFIG_DMA_BUF_PHYS)	+= dma-buf-phys.o
+obj-y				+= ok62xx_esm.o
+obj-y				+= fixup.o
