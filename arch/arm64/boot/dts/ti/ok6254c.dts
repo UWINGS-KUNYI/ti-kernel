@@ -729,6 +729,7 @@
 		enable-gpios = <&main_gpio0 72 GPIO_ACTIVE_HIGH>;
 		reset-gpios = <&main_gpio0 12 GPIO_ACTIVE_LOW>;
 		status = "disabled";
+		
 		port {
 			csi2_cam0: endpoint {
 				remote-endpoint = <&csi2rx0_in_sensor>;
