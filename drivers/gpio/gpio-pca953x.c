@@ -855,6 +855,9 @@ static int pca953x_irq_setup(struct pca953x_chip *chip, int irq_base)
 	irq_chip->irq_bus_sync_unlock = pca953x_irq_bus_sync_unlock;
 	irq_chip->irq_set_type = pca953x_irq_set_type;
 	irq_chip->irq_shutdown = pca953x_irq_shutdown;
+#ifdef CONFIG_IRQ_PIPELINE
+	irq_chip->flags |= IRQCHIP_PIPELINE_SAFE;
+#endif
 
 	girq = &chip->gpio_chip.irq;
 	girq->chip = irq_chip;

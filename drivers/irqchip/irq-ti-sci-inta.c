@@ -262,7 +262,9 @@ static struct ti_sci_inta_vint_desc *ti_sci_inta_alloc_parent_irq(struct irq_dom
 	list_add_tail(&vint_desc->list, &inta->vint_list);
 	irq_set_chained_handler_and_data(vint_desc->parent_virq,
 					 ti_sci_inta_irq_handler, vint_desc);
-
+#ifdef CONFIG_IRQ_PIPELINE
+	irq_switch_oob(vint_desc->parent_virq, true);
+#endif
 	return vint_desc;
 free_vint_desc:
 	kfree(vint_desc);
@@ -543,6 +545,9 @@ static struct irq_chip ti_sci_inta_irq_chip = {
 	.irq_set_affinity	= ti_sci_inta_set_affinity,
 	.irq_request_resources	= ti_sci_inta_request_resources,
 	.irq_release_resources	= ti_sci_inta_release_resources,
+#ifdef CONFIG_IRQ_PIPELINE
+	.flags			= IRQCHIP_PIPELINE_SAFE,
+#endif
 };
 
 /**

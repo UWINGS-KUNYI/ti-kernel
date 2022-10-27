@@ -806,6 +806,14 @@ copy_present_page(struct vm_area_struct *dst_vma, struct vm_area_struct *src_vma
 		return 1;
 
 	/*
+	 * If the source mm belongs to a Dovetail-enabled process, we
+	 * don't want to impose the COW-induced latency on it: make
+	 * sure the child gets its own copy of the page.
+	 */
+	if (dovetailing() && test_bit(MMF_DOVETAILED, &src_mm->flags))
+		goto do_copy;
+
+	/*
 	 * What we want to do is to check whether this page may
 	 * have been pinned by the parent process.  If so,
 	 * instead of wrprotect the pte on both sides, we copy
@@ -823,6 +831,7 @@ copy_present_page(struct vm_area_struct *dst_vma, struct vm_area_struct *src_vma
 	if (likely(!page_maybe_dma_pinned(page)))
 		return 1;
 
+do_copy:
 	new_page = *prealloc;
 	if (!new_page)
 		return -EAGAIN;
@@ -5106,6 +5115,15 @@ void print_vma_addr(char *prefix, unsigned long ip)
 #if defined(CONFIG_PROVE_LOCKING) || defined(CONFIG_DEBUG_ATOMIC_SLEEP)
 void __might_fault(const char *file, int line)
 {
+	/*
+	 * When running over the oob stage (e.g. some co-kernel's own
+	 * thread), we should only make sure to run with hw IRQs
+	 * enabled before accessing the memory.
+	 */
+	if (running_oob()) {
+		WARN_ON_ONCE(hard_irqs_disabled());
+		return;
+	}
 	/*
 	 * Some code (nfs/sunrpc) uses socket ops on kernel memory while
 	 * holding the mmap_lock, this is safe because kernel memory doesn't

@@ -406,7 +406,7 @@ static void hpet_init_clockevent(struct hpet_channel *hc, unsigned int rating)
 	evt->set_next_event	= hpet_clkevt_set_next_event;
 	evt->set_state_shutdown	= hpet_clkevt_set_state_shutdown;
 
-	evt->features = CLOCK_EVT_FEAT_ONESHOT;
+	evt->features = CLOCK_EVT_FEAT_ONESHOT|CLOCK_EVT_FEAT_PIPELINE;
 	if (hc->boot_cfg & HPET_TN_PERIODIC) {
 		evt->features		|= CLOCK_EVT_FEAT_PERIODIC;
 		evt->set_state_periodic	= hpet_clkevt_set_state_periodic;
@@ -519,7 +519,7 @@ static irqreturn_t hpet_msi_interrupt_handler(int irq, void *data)
 		return IRQ_HANDLED;
 	}
 
-	evt->event_handler(evt);
+	clockevents_handle_event(evt);
 	return IRQ_HANDLED;
 }
 
@@ -702,7 +702,7 @@ static u64 read_hpet(struct clocksource *cs)
 	if (arch_spin_is_locked(&old.lock))
 		goto contended;
 
-	local_irq_save(flags);
+	flags = hard_local_irq_save();
 	if (arch_spin_trylock(&hpet.lock)) {
 		new.value = hpet_readl(HPET_COUNTER);
 		/*
@@ -710,10 +710,10 @@ static u64 read_hpet(struct clocksource *cs)
 		 */
 		WRITE_ONCE(hpet.value, new.value);
 		arch_spin_unlock(&hpet.lock);
-		local_irq_restore(flags);
+		hard_local_irq_restore(flags);
 		return (u64)new.value;
 	}
-	local_irq_restore(flags);
+	hard_local_irq_restore(flags);
 
 contended:
 	/*

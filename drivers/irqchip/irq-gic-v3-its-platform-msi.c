@@ -12,6 +12,9 @@
 
 static struct irq_chip its_pmsi_irq_chip = {
 	.name			= "ITS-pMSI",
+#ifdef CONFIG_IRQ_PIPELINE
+	.flags			= IRQCHIP_PIPELINE_SAFE,
+#endif
 };
 
 static int of_pmsi_get_dev_id(struct irq_domain *domain, struct device *dev,
