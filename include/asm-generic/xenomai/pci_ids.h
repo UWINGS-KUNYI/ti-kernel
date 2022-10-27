@@ -1,0 +1,1 @@
+/home/kunyi/ok6254/src/xenomai/kernel/cobalt/include/asm-generic/xenomai/pci_ids.h
