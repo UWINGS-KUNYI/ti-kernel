@@ -701,7 +701,15 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&main_i2c0_pins_default>;
 	clock-frequency = <400000>;
-	status = "disabled";
+	status = "okay";
+
+	eeprom: ft24c64@51 {
+		compatible = "atmel,24c64";
+		reg = <0x51>;
+		pagesize = <32>;
+		address-width = <16>;
+		status = "okay";
+	};
 };
 
 &main_i2c1 {
@@ -720,6 +728,7 @@
 		clock-frequency = <24000000>;
 		enable-gpios = <&main_gpio0 72 GPIO_ACTIVE_HIGH>;
 		reset-gpios = <&main_gpio0 12 GPIO_ACTIVE_LOW>;
+		status = "disabled";
 		port {
 			csi2_cam0: endpoint {
 				remote-endpoint = <&csi2rx0_in_sensor>;
@@ -741,6 +750,7 @@
 		touchscreen-size-x = <4000>;
 		touchscreen-size-y = <4000>;
 		ti,x-plate-ohms = <180>;
+		status = "disabled";
 	};
 
 
@@ -757,7 +767,7 @@
 		touchscreen-size-y = <480>;
 		touchscreen-inverted-x;
 		touchscreen-inverted-y;
-		status = "okay";
+		status = "disabled";
 	};
 
 };
@@ -793,7 +803,7 @@
 		touchscreen-size-x = <1280>;
 		touchscreen-size-y = <800>;
 		touchscreen-swapped-x-y;
-		status = "okay";
+		status = "disabled";
 	};
 
 };
