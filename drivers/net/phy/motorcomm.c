@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Motorcomm 8511/8521 PHY driver.
+ * Motorcomm 8511/8521/8531S PHY driver.
  *
  * Author: Peter Geis <pgwipeout@gmail.com>
  * Author: Frank <Frank.Sae@motor-comm.com>
@@ -15,8 +15,9 @@
 
 #define PHY_ID_YT8511		0x0000010a
 #define PHY_ID_YT8521		0x0000011A
+#define PHY_ID_YT8531S		0x4F51E91A
 
-/* YT8521 Register Overview
+/* YT8521/YT8531S Register Overview
  *	UTP Register space	|	FIBER Register space
  *  ------------------------------------------------------------
  * |	UTP MII			|	FIBER MII		|
@@ -149,7 +150,7 @@
 #define YT8521_LINK_TIMER_CFG2_REG		0xA5
 #define YT8521_LTCR_EN_AUTOSEN			BIT(15)
 
-/* 0xA000, 0xA001, 0xA003 ,and 0xA006 ~ 0xA00A  are common ext registers
+/* 0xA000, 0xA001, 0xA003, 0xA006 ~ 0xA00A and 0xA012 are common ext registers
  * of yt8521 phy. There is no need to switch reg space when operating these
  * registers.
  */
@@ -162,7 +163,6 @@
 
 #define YT8521_CHIP_CONFIG_REG			0xA001
 #define YT8521_CCR_SW_RST			BIT(15)
-#define YT8521_RXC_DELAY_EN			BIT(8)
 
 #define YT8521_CCR_MODE_SEL_MASK		(BIT(2) | BIT(1) | BIT(0))
 #define YT8521_CCR_MODE_UTP_TO_RGMII		0
@@ -224,6 +224,9 @@
  */
 #define YTPHY_WCR_TYPE_PULSE			BIT(0)
 
+#define YT8531S_SYNCE_CFG_REG			0xA012
+#define YT8531S_SCR_SYNCE_ENABLE		BIT(6)
+
 /* Extended Register  end */
 
 struct yt8521_priv {
@@ -242,6 +245,7 @@ struct yt8521_priv {
 	 * YT8521_RSSR_TO_BE_ARBITRATED
 	 */
 	u8 reg_page;
+
 	u16 ge_tx_delay;
 	u16 fe_tx_delay;
 	u16 rx_delay;
@@ -661,6 +665,26 @@ static int yt8521_probe(struct phy_device *phydev)
 	}
 
 	return 0;
+}
+
+/**
+ * yt8531s_probe() - read chip config then set suitable polling_mode
+ * @phydev: a pointer to a &struct phy_device
+ *
+ * returns 0 or negative errno code
+ */
+static int yt8531s_probe(struct phy_device *phydev)
+{
+	int ret;
+
+	/* Disable SyncE clock output by default */
+	ret = ytphy_modify_ext_with_lock(phydev, YT8531S_SYNCE_CFG_REG,
+					 YT8531S_SCR_SYNCE_ENABLE, 0);
+	if (ret < 0)
+		return ret;
+
+	/* same as yt8521_probe */
+	return yt8521_probe(phydev);
 }
 
 /**
@@ -1125,10 +1149,10 @@ static int yt8521_resume(struct phy_device *phydev)
  */
 static int yt8521_config_init(struct phy_device *phydev)
 {
+	struct yt8521_priv *priv = (struct yt8521_priv *)phydev->priv;;
 	int old_page;
 	int ret = 0;
 	u16 val;
-	struct yt8521_priv *priv = (struct yt8521_priv *)phydev->priv;;
 
 	old_page = phy_select_page(phydev, YT8521_RSSR_UTP_SPACE);
 	if (old_page < 0)
@@ -1160,6 +1184,7 @@ static int yt8521_config_init(struct phy_device *phydev)
 
 	/* set rgmii delay mode */
 	if (phydev->interface != PHY_INTERFACE_MODE_SGMII) {
+		phydev_dbg(phydev, "set RGMII_CONFIG1_REG:0x%x", val);
 		ret = ytphy_modify_ext(phydev, YT8521_RGMII_CONFIG1_REG,
 				       (YT8521_RC1R_RX_DELAY_MASK |
 				       YT8521_RC1R_FE_TX_DELAY_MASK |
@@ -1167,8 +1192,6 @@ static int yt8521_config_init(struct phy_device *phydev)
 				       val);
 		if (ret < 0)
 			goto err_restore_page;
-
-		phydev_dbg(phydev, "set RGMII_CONFIG1_REG:0x%x", val);
 	}
 
 	/* disable auto sleep */
@@ -1806,11 +1829,28 @@ static struct phy_driver motorcomm_phy_drvs[] = {
 		.suspend	= yt8521_suspend,
 		.resume		= yt8521_resume,
 	},
+	{
+		PHY_ID_MATCH_EXACT(PHY_ID_YT8531S),
+		.name		= "YT8531S Gigabit Ethernet",
+		.get_features	= yt8521_get_features,
+		.probe		= yt8531s_probe,
+		.read_page	= yt8521_read_page,
+		.write_page	= yt8521_write_page,
+		.get_wol	= ytphy_get_wol,
+		.set_wol	= ytphy_set_wol,
+		.config_aneg	= yt8521_config_aneg,
+		.aneg_done	= yt8521_aneg_done,
+		.config_init	= yt8521_config_init,
+		.read_status	= yt8521_read_status,
+		.soft_reset	= yt8521_soft_reset,
+		.suspend	= yt8521_suspend,
+		.resume		= yt8521_resume,
+	},
 };
 
 module_phy_driver(motorcomm_phy_drvs);
 
-MODULE_DESCRIPTION("Motorcomm 8511/8521 PHY driver");
+MODULE_DESCRIPTION("Motorcomm 8511/8521/8531S PHY driver");
 MODULE_AUTHOR("Peter Geis");
 MODULE_AUTHOR("Frank");
 MODULE_LICENSE("GPL");
@@ -1818,6 +1858,7 @@ MODULE_LICENSE("GPL");
 static const struct mdio_device_id __maybe_unused motorcomm_tbl[] = {
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8511) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8521) },
+	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8531S) },
 	{ /* sentinal */ }
 };
 
