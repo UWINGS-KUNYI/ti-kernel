@@ -498,7 +498,7 @@
 			AM62X_IOPAD(0x100, PIN_OUTPUT, 0) /* (AC25) VOUT0_VSYNC */
 		>;
 	};
-	oldi0_pins_default: oldi0-pins-default {
+	main_oldi0_pins_default: main-oldi0-pins-default {
 		pinctrl-single,pins = <
 			AM62X_IOPAD(0x260, PIN_OUTPUT, 0) /* (AA5) OLDI0_A0N */
 			AM62X_IOPAD(0x25c, PIN_OUTPUT, 0) /* (Y6) OLDI0_A0P */

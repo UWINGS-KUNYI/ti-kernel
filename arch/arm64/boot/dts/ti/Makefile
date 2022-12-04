@@ -81,3 +81,5 @@ dtb-$(CONFIG_ARCH_K3) += k3-j721e-fpdlink-imx390-rcm-1-3.dtbo
 
 dtb-$(CONFIG_ARCH_K3) += k3-am62a7-sk.dtb
 dtb-$(CONFIG_ARCH_K3) += ok6254c.dtb
+dtb-$(CONFIG_ARCH_K3) += ok6254c-lvds.dtbo
+dtb-$(CONFIG_ARCH_K3) += ok6254c-dpi.dtbo
