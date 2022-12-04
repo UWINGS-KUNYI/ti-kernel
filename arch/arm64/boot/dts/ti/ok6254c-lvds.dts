@@ -1,0 +1,168 @@
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/pwm/pwm.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/pinctrl/k3.h>
+#include <dt-bindings/soc/ti,sci_pm_domain.h>
+
+
+/ {
+
+	fragment@101 {
+		target-path = "/";
+		__overlay__ {
+#if 0
+			display0 {
+				compatible = "jiya,jy18f15";
+				backlight = <&backlight_lvds>;
+				power-supply = <&vdd_lvds>;
+
+				port {
+					lvds_in0: endpoint {
+						remote-endpoint = <&oldi_out0>;
+					};
+				};
+			};
+#endif
+			vdd_lvds: fixed-regulator-lvds {
+				compatible = "regulator-fixed";
+				regulator-name = "lvds";
+				pinctrl-names = "default";
+				pinctrl-0 = <&vdd_lvds_pins_default>;
+				regulator-min-microvolt = <5000000>;
+				regulator-max-microvolt = <5000000>;
+				regulator-boot-on;
+				enable-active-high;
+				vin-supply = <&vcc_5v0>;
+				gpios = <&main_gpio0 39 GPIO_ACTIVE_HIGH>;
+				states = <0 0x0>,
+					 <5000000 0x1>;
+			};
+
+			backlight_lvds: backlight-lvds {
+				compatible = "pwm-backlight";
+				pwms = <&epwm1 0 20000 0>;
+				brightness-levels = <
+					  0  20  20  21  21  22  22  23
+					 23  24  24  25  25  26  26  27
+					 27  28  28  29  29  30  30  31
+					 31  32  32  33  33  34  34  35
+					 35  36  36  37  37  38  38  39
+					 40  41  42  43  44  45  46  47
+					 48  49  50  51  52  53  54  55
+					 56  57  58  59  60  61  62  63
+					 64  65  66  67  68  69  70  71
+					 72  73  74  75  76  77  78  79
+					 80  81  82  83  84  85  86  87
+					 88  89  90  91  92  93  94  95
+					 96  97  98  99 100 101 102 103
+					104 105 106 107 108 109 110 111
+					112 113 114 115 116 117 118 119
+					120 121 122 123 124 125 126 127
+					128 129 130 131 132 133 134 135
+					136 137 138 139 140 141 142 143
+					144 145 146 147 148 149 150 151
+					152 153 154 155 156 157 158 159
+					160 161 162 163 164 165 166 167
+					168 169 170 171 172 173 174 175
+					176 177 178 179 180 181 182 183
+					184 185 186 187 188 189 190 191
+					192 193 194 195 196 197 198 199
+					200 201 202 203 204 205 206 207
+					208 209 210 211 212 213 214 215
+					216 217 218 219 220 221 222 223
+					224 225 226 227 228 229 230 231
+					232 233 234 235 236 237 238 239
+					240 241 242 243 244 245 246 247
+					248 249 250 251 252 253 254 255
+				>;
+				default-brightness-level = <200>;
+				is-forlinx;
+			};
+
+			panel_lvds: panel-lvds {
+				compatible = "panel-lvds";
+				backlight = <&backlight_lvds>;
+				lable = "LVDS";
+				width-mm = <273>;
+				height-mm = <163>;
+				data-mapping = "vesa-24";
+				power-supply = <&vdd_lvds>;
+
+				panel-timing {
+					clock-frequency = <71107200>; /* 1440(Htotal)x823(Vtotal)x60(fps) */
+					hactive = <1280>;
+					vactive = <800>;
+					hback-porch = <10>;
+					hfront-porch = <140>;
+					vback-porch = <1>;
+					vfront-porch = <2>;
+					hsync-len = <10>;
+					vsync-len = <20>;
+					hsync-active = <0>;
+					vsync-active = <1>;
+					de-active = <1>;
+					pixelclk-active = <0>;
+				};
+
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					port@0 {
+						reg = <0>;
+						lvds_in0: endpoint {
+							remote-endpoint = <&oldi_out0>;
+						};
+					};
+				};
+			};
+		};
+	};
+};
+
+&main_pmx0 {
+	vdd_lvds_pins_default: vdd-lvds-pins-default {
+		pinctrl-single,pins = <
+			AM62X_IOPAD(0x0a0, PIN_OUTPUT, 7) /* (K25) GPMC0_WPn.GPIO0_39 */
+		>;
+	};
+
+	main_epwm1_a_pins_default: main-epwm1-a-pins-default {
+		pinctrl-single,pins = <
+			AM62X_IOPAD(0x19c, PIN_OUTPUT, 6) /* (B18) MCASP0_AXR1.EHRPWM1_A */
+		>;
+	};
+};
+
+
+&dss {
+	pinctrl-names = "default";
+	pinctrl-0 = <&main_oldi0_pins_default>;
+	status = "okay";
+};
+
+&dss_ports {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	port@0 {
+		reg = <0>;
+		oldi_out0: endpoint {
+			remote-endpoint = <&lvds_in0>;
+		};
+	};
+};
+
+&gt928 {
+	status = "okay";
+};
+
+&epwm1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&main_epwm1_a_pins_default>;
+	status = "okay";
+};

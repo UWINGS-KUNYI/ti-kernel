@@ -415,6 +415,7 @@ static int panel_dpi_probe(struct device *dev,
 	struct panel_desc *desc;
 	unsigned int bus_flags;
 	struct videomode vm;
+	const char *bus_fmt;
 	int ret;
 
 	np = dev->of_node;
@@ -447,6 +448,12 @@ static int panel_dpi_probe(struct device *dev,
 
 	/* We do not know the connector for the DT node, so guess it */
 	desc->connector_type = DRM_MODE_CONNECTOR_DPI;
+
+	ret = of_property_read_string(np, "bus-fmt", &bus_fmt);
+	if(ret == 0 && !strcmp(bus_fmt, "rgb565"))
+		desc->bus_format = MEDIA_BUS_FMT_RGB565_1X16;
+	else
+		desc->bus_format = MEDIA_BUS_FMT_RGB888_1X24;
 
 	panel->desc = desc;
 
@@ -3991,6 +3998,40 @@ static const struct panel_desc arm_rtsm = {
 	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 };
 
+static const struct drm_display_mode jy_18f15_mode = {
+	.clock = 71100,
+	.hdisplay = 1280,
+	.hsync_start = 1280 + 60,
+	.hsync_end = 1280 + 60 + 60,
+	.htotal =  1280 + 60 + 60 + 40,
+	.vdisplay = 800,
+	.vsync_start = 800 + 7,
+	.vsync_end = 800 + 7 + 7,
+	.vtotal = 800 + 7 + 7 + 9,
+	.flags = DISPLAY_FLAGS_HSYNC_LOW | DISPLAY_FLAGS_DE_HIGH |
+		 DISPLAY_FLAGS_PIXDATA_POSEDGE |
+		 DISPLAY_FLAGS_SYNC_POSEDGE,
+};
+
+static const struct panel_desc jy_18f15_lvds = {
+	.modes = &jy_18f15_mode,
+	.num_modes = 1,
+	.bpc = 8,
+	.size = {
+		.width = 217,
+		.height = 136,
+	},
+	.delay = {
+		.enable = 50,
+		.disable = 50,
+	},
+	.bus_format = MEDIA_BUS_FMT_RGB888_1X7X4_SPWG,
+	.bus_flags = DRM_BUS_FLAG_DE_HIGH |
+		     DRM_BUS_FLAG_PIXDATA_SAMPLE_NEGEDGE |
+		     DRM_BUS_FLAG_SYNC_SAMPLE_NEGEDGE,
+	.connector_type = DRM_MODE_CONNECTOR_LVDS,
+};
+
 static const struct of_device_id platform_of_match[] = {
 	{
 		.compatible = "ampire,am-1280800n3tzqw-t00h",
@@ -4398,10 +4439,14 @@ static const struct of_device_id platform_of_match[] = {
 		.compatible = "winstar,wf35ltiacd",
 		.data = &winstar_wf35ltiacd,
 	}, {
+		.compatible = "jiya,jy18f15",
+		.data = &jy_18f15_lvds,
+	}, {
 		/* Must be the last entry */
 		.compatible = "panel-dpi",
 		.data = &panel_dpi,
-	}, {
+	},
+	{
 		/* sentinel */
 	}
 };

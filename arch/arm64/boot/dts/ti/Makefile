@@ -120,3 +120,5 @@ dtb-$(CONFIG_ARCH_K3) += k3-am62a7-sk-csi2-imx219.dtbo
 dtb-$(CONFIG_ARCH_K3) += k3-am62a7-sk-ethernet-dc01.dtbo
 
 dtb-$(CONFIG_ARCH_K3) += ok6254c.dtb
+dtb-$(CONFIG_ARCH_K3) += ok6254c-lvds.dtbo
+dtb-$(CONFIG_ARCH_K3) += ok6254c-dpi.dtbo
